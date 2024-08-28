@@ -495,7 +495,7 @@ func TestNewPipe(t *testing.T) {
 		n1, n2 := net.Pipe()
 		mock := &redisMock{buf: bufio.NewReader(n2), conn: n2, t: t}
 		go func() {
-			mock.Expect("HELLO", "3", "AUTH", "ua", "pa", "SETNAME", "cn").
+			mock.Expect("HELLO", "3", "AUTH", "default", "pa", "SETNAME", "cn").
 				Reply(RedisMessage{
 					typ: '%',
 					values: []RedisMessage{
@@ -507,26 +507,32 @@ func TestNewPipe(t *testing.T) {
 				ReplyString("OK")
 			mock.Expect("SELECT", "1").
 				ReplyString("OK")
-			mock.Expect("CLIENT", "SETINFO", "LIB-NAME", LibName).
-				ReplyError("UNKNOWN COMMAND")
-			mock.Expect("CLIENT", "SETINFO", "LIB-VER", LibVer).
-				ReplyError("UNKNOWN COMMAND")
+			mock.Expect("CLIENT", "NO-TOUCH", "ON").
+				ReplyString("OK")
+			mock.Expect("CLIENT", "NO-EVICT", "ON").
+				ReplyString("OK")
+			mock.Expect("CLIENT", "SETINFO", "LIB-NAME", "libname").
+				ReplyError("UNKOWN COMMAND")
+			mock.Expect("CLIENT", "SETINFO", "LIB-VER", "1").
+				ReplyError("UNKOWN COMMAND")
 		}()
+		go func() { mock.Expect("PING").ReplyString("OK") }()
 		p, err := newPipe(func() (net.Conn, error) { return n1, nil }, &ClientOption{
 			SelectDB:      1,
-			Username:      "ua",
 			Password:      "pa",
 			ClientName:    "cn",
+			ClientNoEvict: true,
 			ClientSetInfo: DisableClientSetInfo,
+			ClientNoTouch: true,
 		})
 		if err != nil {
 			t.Fatalf("pipe setup failed: %v", err)
 		}
-		go func() { mock.Expect("PING").ReplyString("OK") }()
 		p.Close()
 		mock.Close()
 		n1.Close()
 		n2.Close()
+
 	})
 }
 
