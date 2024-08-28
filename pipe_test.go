@@ -516,7 +516,6 @@ func TestNewPipe(t *testing.T) {
 			mock.Expect("CLIENT", "SETINFO", "LIB-VER", "1").
 				ReplyError("UNKNOWN COMMAND")
 		}()
-		go func() { mock.Expect("PING").ReplyString("OK") }()
 		p, err := newPipe(func() (net.Conn, error) { return n1, nil }, &ClientOption{
 			SelectDB:      1,
 			Password:      "pa",
@@ -525,6 +524,7 @@ func TestNewPipe(t *testing.T) {
 			ClientSetInfo: DisableClientSetInfo,
 			ClientNoTouch: true,
 		})
+		go func() { mock.Expect("PING").ReplyString("OK") }()
 		if err != nil {
 			t.Fatalf("pipe setup failed: %v", err)
 		}
