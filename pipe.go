@@ -10,6 +10,7 @@ import (
 	"os"
 	"regexp"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -168,10 +169,13 @@ func _newPipe(connFn func() (net.Conn, error), option *ClientOption, r2ps, nobg 
 	if option.ClientNoEvict {
 		init = append(init, []string{"CLIENT", "NO-EVICT", "ON"})
 	}
-	if len(option.ClientSetInfo) == 2 {
-		init = append(init, []string{"CLIENT", "SETINFO", "LIB-NAME", option.ClientSetInfo[0]}, []string{"CLIENT", "SETINFO", "LIB-VER", option.ClientSetInfo[1]})
-	} else {
-		init = append(init, []string{"CLIENT", "SETINFO", "LIB-NAME", LibName}, []string{"CLIENT", "SETINFO", "LIB-VER", LibVer})
+
+	if !slices.Equal(option.ClientSetInfo, DisableClientSetInfo) {
+		if len(option.ClientSetInfo) == 2 {
+			init = append(init, []string{"CLIENT", "SETINFO", "LIB-NAME", option.ClientSetInfo[0]}, []string{"CLIENT", "SETINFO", "LIB-VER", option.ClientSetInfo[1]})
+		} else {
+			init = append(init, []string{"CLIENT", "SETINFO", "LIB-NAME", LibName}, []string{"CLIENT", "SETINFO", "LIB-VER", LibVer})
+		}
 	}
 
 	timeout := option.Dialer.Timeout
