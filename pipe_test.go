@@ -512,9 +512,9 @@ func TestNewPipe(t *testing.T) {
 			mock.Expect("CLIENT", "NO-EVICT", "ON").
 				ReplyString("OK")
 			mock.Expect("CLIENT", "SETINFO", "LIB-NAME", "libname").
-				ReplyError("UNKOWN COMMAND")
+				ReplyError("UNKNOWN COMMAND")
 			mock.Expect("CLIENT", "SETINFO", "LIB-VER", "1").
-				ReplyError("UNKOWN COMMAND")
+				ReplyError("UNKNOWN COMMAND")
 		}()
 		go func() { mock.Expect("PING").ReplyString("OK") }()
 		p, err := newPipe(func() (net.Conn, error) { return n1, nil }, &ClientOption{
@@ -532,7 +532,6 @@ func TestNewPipe(t *testing.T) {
 		mock.Close()
 		n1.Close()
 		n2.Close()
-
 	})
 }
 
