@@ -495,7 +495,7 @@ func TestNewPipe(t *testing.T) {
 		n1, n2 := net.Pipe()
 		mock := &redisMock{buf: bufio.NewReader(n2), conn: n2, t: t}
 		go func() {
-			mock.Expect("HELLO", "3", "AUTH", "default", "pa", "SETNAME", "cn").
+			mock.Expect("HELLO", "3").
 				Reply(RedisMessage{
 					typ: '%',
 					values: []RedisMessage{
@@ -505,20 +505,14 @@ func TestNewPipe(t *testing.T) {
 				})
 			mock.Expect("CLIENT", "TRACKING", "ON", "OPTIN").
 				ReplyString("OK")
-			mock.Expect("SELECT", "1").
-				ReplyString("OK")
 		}()
+		p, err := newPipe(func() (net.Conn, error) { return n1, nil }, &ClientOption{
+			ClientSetInfo: DisableClientSetInfo,
+		})
 		go func() {
 			mock.Expect("PING").
 				ReplyString("OK")
 		}()
-		p, err := newPipe(func() (net.Conn, error) { return n1, nil }, &ClientOption{
-			SelectDB:      1,
-			Password:      "pa",
-			ClientName:    "cn",
-			ClientSetInfo: DisableClientSetInfo,
-		})
-		go func() {}()
 		if err != nil {
 			t.Fatalf("pipe setup failed: %v", err)
 		}
